@@ -9,5 +9,6 @@ npm install
 
 
 Develop locally
-serverless dynamodb install
-serverless offline start
+      "dynamo:install": "sls dynamodb install",
+      "dynamo:start": "sls dynamodb start --stage local --migrate",
+      "offline:start": "sls offline --stage local",
