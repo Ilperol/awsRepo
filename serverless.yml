@@ -1,63 +1,67 @@
-org: ilperol
-app: todo
 service: todo-app
+
+frameworkVersion: '3'
 
 provider:
   name: aws
   runtime: nodejs18.x
+  stage: ${opt:stage, 'local'}
   region: us-east-1
   environment:
-    TODOS_TABLE: ${self:service}-table-${sls:stage}
-  httpApi:
-    cors:
-      allowedOrigins:
-        - '*'
-      allowedHeaders:
-        - '*'
-      allowedMethods:
-        - GET
-        - POST
-        - PUT
-        - DELETE
-      allowCredentials: false
+    TODOS_TABLE: ${self:service}-${self:provider.stage}
   iamRoleStatements:
     - Effect: Allow
       Action:
+        - dynamodb:Query
+        - dynamodb:GetItem
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
-        - dynamodb:GetItem
-        - dynamodb:Scan
-        - dynamodb:Query
       Resource:
         - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
-        - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/GSI1
+
+plugins:
+  - serverless-offline
+  - serverless-dynamodb-local
+
+custom:
+  dynamodb:
+    stages:
+      - local
+    start:
+      port: 8000
+      inMemory: true
+      migrate: true
 
 functions:
   createTodo:
-    handler: handler.createTodo
+    handler: src/handlers/createTodo.handler
     events:
-      - httpApi:
-          path: /todos
+      - http:
+          path: todos
           method: post
+          cors: true
   getTodos:
-    handler: handler.getTodos
+    handler: src/handlers/getTodos.handler
     events:
-      - httpApi:
-          path: /todos
+      - http:
+          path: todos
           method: get
+          cors: true
   updateTodo:
-    handler: handler.updateTodo
+    handler: src/handlers/updateTodo.handler
     events:
-      - httpApi:
-          path: /todos/{id}
+      - http:
+          path: todos/{id}
           method: put
+          cors: true
   deleteTodo:
-    handler: handler.deleteTodo
+    handler: src/handlers/deleteTodo.handler
     events:
-      - httpApi:
-          path: /todos/{id}
+      - http:
+          path: todos/{id}
           method: delete
+          cors: true
 
 resources:
   Resources:
@@ -70,22 +74,9 @@ resources:
             AttributeType: S
           - AttributeName: sk
             AttributeType: S
-          - AttributeName: gsi1_pk
-            AttributeType: S
-          - AttributeName: gsi1_sk
-            AttributeType: S
         KeySchema:
           - AttributeName: pk
             KeyType: HASH
           - AttributeName: sk
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
-        GlobalSecondaryIndexes:
-          - IndexName: GSI1
-            KeySchema:
-              - AttributeName: gsi1_pk
-                KeyType: HASH
-              - AttributeName: gsi1_sk
-                KeyType: RANGE
-            Projection:
-              ProjectionType: ALL
