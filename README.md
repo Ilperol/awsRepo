@@ -4,8 +4,7 @@ TODO aws
 
 Instal
 
-```bash
-npm install
+yarn install
 
 
 Develop locally
