@@ -3,18 +3,18 @@
     "version": "1.0.0",
     "private": true,
     "dependencies": {
-      "@aws-sdk/client-dynamodb": "^3.365.0",
-      "@aws-sdk/client-lambda": "^3.637.0",
-      "serverless-dynamodb-local": "^0.2.40",
-      "serverless-offline": "^11.3.0"
+        "@aws-sdk/client-dynamodb": "^3.365.0",
+        "@aws-sdk/client-lambda": "^3.637.0",
+        "serverless-dynamodb-local": "^0.2.40",
+        "serverless-offline": "^11.3.0",
+        "yarn": "^1.22.22"
     },
     "scripts": {
-      "install": "yarn install",
-      "dynamo:install": "sls dynamodb install",
-      "dynamo:start": "sls dynamodb start --stage local --migrate",
-      "offline:start": "sls offline --stage local",
-      "deploy": "sls deploy --stage local",
-      "destroy": "sls remove --stage local"
+        "install": "yarn install",
+        "dynamo:install": "sls dynamodb install",
+        "dynamo:start": "sls dynamodb start --stage local --migrate",
+        "offline:start": "sls offline --stage local",
+        "deploy": "sls deploy --stage local",
+        "destroy": "sls remove --stage local"
     }
-  }
-  
+}
