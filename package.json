@@ -1,0 +1,24 @@
+{
+    "name": "repoaws",
+    "version": "1.0.0",
+    "private": true,
+    "dependencies": {
+        "@aws-sdk/client-dynamodb": "^3.365.0",
+        "@aws-sdk/client-lambda": "^3.637.0",
+        "@aws-sdk/lib-dynamodb": "^3.699.0",
+        "aws-sdk": "^2.1692.0",
+        "serverless-dynamodb": "^0.2.56",
+        "serverless-offline": "^14.3.4",
+        "yarn": "^1.22.22"
+    },
+    "scripts": {
+        "dynamo:install": "sls dynamodb install",
+        "dynamo:start": "sls dynamodb start --stage local --migrate",
+        "offline:start": "sls offline --stage local",
+        "deploy": "sls deploy --stage local",
+        "destroy": "sls remove --stage local"
+    },
+    "devDependencies": {
+        "serverless-s3-local": "^0.8.5"
+    }
+}
