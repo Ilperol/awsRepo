@@ -1,30 +1,46 @@
-const DynamoDBService = require('../services/DynamoDBService');
-const ValidationService = require('../services/ValidationService');
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBDocumentClient, PutCommand } = require("@aws-sdk/lib-dynamodb");
 const { v4: uuidv4 } = require('uuid');
+const ValidationService = require('../services/ValidationService');
+const Todo = require('../models/todo');
 
-module.exports.handler = async (event) => {
+let options = {};
+if (process.env.IS_OFFLINE === 'true') {
+  options = {
+    region: 'localhost',
+    endpoint: 'http://localhost:8000',
+  };
+}
+const client = new DynamoDBClient(options);
+const dynamoDb = DynamoDBDocumentClient.from(client);
+
+exports.handler = async (event) => {
   try {
-    const data = JSON.parse(event.body);
-    ValidationService.validateTodoInput(data);
+    if (!event.body) {
+      return { statusCode: 400, body: JSON.stringify({ error: "Missing request body" }) };
+    }
 
-    const todo = {
-      pk: 'todo', // Partition Key
-      sk: uuidv4(), // Sort Key (Unique ID)
-      name: data.name,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    const body = JSON.parse(event.body);
 
-    await DynamoDBService.createTodo(todo);
+    try {
+      ValidationService.validateTodoInput(body);
+    } catch (error) {
+      return { statusCode: 400, body: JSON.stringify({ error: error.message }) };
+    }
 
-    return {
-      statusCode: 201,
-      body: JSON.stringify(todo),
-    };
+    const todo = new Todo({
+      sk: uuidv4(),
+      task: body.task,
+      completed: body.completed,
+    });
+
+    const params = { TableName: process.env.TODOS_TABLE, Item: todo };
+
+    await dynamoDb.send(new PutCommand(params));
+
+    return { statusCode: 201, body: JSON.stringify({ message: "Todo created successfully", id: todo.sk }) };
   } catch (error) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: error.message }),
-    };
+    console.error("Error:", error);
+    return { statusCode: 500, body: JSON.stringify({ error: "Could not create todo" }) };
   }
 };

@@ -1,11 +1,19 @@
 class Todo {
-    constructor({ id, name, createdAt, updatedAt }) {
-      this.id = id;
-      this.name = name;
-      this.createdAt = createdAt;
-      this.updatedAt = updatedAt;
-    }
+  constructor({ pk = "todo", sk, task = "Untitled task", completed = false }) {
+    this.pk = pk;
+    this.sk = sk;
+    this.task = task;
+    this.completed = completed;
   }
-  
-  module.exports = Todo;
-  
+
+  static fromDbItem(item) {
+    return new Todo({
+      pk: item.pk,
+      sk: item.sk,
+      task: item.task,
+      completed: item.completed,
+    });
+  }
+}
+
+module.exports = Todo;

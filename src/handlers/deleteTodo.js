@@ -1,19 +1,28 @@
-const DynamoDBService = require('../services/DynamoDBService');
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBDocumentClient, DeleteCommand } = require("@aws-sdk/lib-dynamodb");
 
-module.exports.handler = async (event) => {
+let options = {};
+if (process.env.IS_OFFLINE === 'true') {
+  options = { region: 'localhost', endpoint: 'http://localhost:8000' };
+}
+const client = new DynamoDBClient(options);
+const dynamoDb = DynamoDBDocumentClient.from(client);
+
+exports.handler = async (event) => {
   try {
     const { id } = event.pathParameters;
 
-    await DynamoDBService.deleteTodo(id);
+    if (!id) {
+      return { statusCode: 400, body: JSON.stringify({ error: "Missing todo ID" }) };
+    }
 
-    return {
-      statusCode: 204,
-      body: null,
-    };
+    const params = { TableName: process.env.TODOS_TABLE, Key: { pk: "todo", sk: id } };
+
+    await dynamoDb.send(new DeleteCommand(params));
+
+    return { statusCode: 200, body: JSON.stringify({ message: "Todo deleted successfully" }) };
   } catch (error) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: error.message }),
-    };
+    console.error("Error deleting todo:", error);
+    return { statusCode: 500, body: JSON.stringify({ error: "Could not delete todo" }) };
   }
 };

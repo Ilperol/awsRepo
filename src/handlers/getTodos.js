@@ -1,17 +1,29 @@
-const DynamoDBService = require('../services/DynamoDBService');
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBDocumentClient, QueryCommand } = require("@aws-sdk/lib-dynamodb");
+const Todo = require('../models/todo');
 
-module.exports.handler = async () => {
+let options = {};
+if (process.env.IS_OFFLINE === 'true') {
+  options = { region: 'localhost', endpoint: 'http://localhost:8000' };
+}
+const client = new DynamoDBClient(options);
+const dynamoDb = DynamoDBDocumentClient.from(client);
+
+exports.handler = async () => {
   try {
-    const todos = await DynamoDBService.getAllTodos();
+    const params = {
+      TableName: process.env.TODOS_TABLE,
+      KeyConditionExpression: "pk = :pk",
+      ExpressionAttributeValues: { ":pk": "todo" },
+    };
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify(todos),
-    };
+    const result = await dynamoDb.send(new QueryCommand(params));
+
+    const todos = result.Items.map(Todo.fromDbItem);
+
+    return { statusCode: 200, body: JSON.stringify(todos) };
   } catch (error) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Could not fetch todos' }),
-    };
+    console.error("Error fetching todos:", error);
+    return { statusCode: 500, body: JSON.stringify({ error: "Could not fetch todos" }) };
   }
 };
